@@ -1,36 +1,43 @@
 import './style.css'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-import * as dat from 'dat.gui'
+import Gui from './config/GUI'
+import Stats from 'three/examples/jsm/libs/stats.module'
+import Plane from './model/Plane'
+import Building from './model/Building'
+
+// Stats
+const stats = Stats()
+document.body.appendChild(stats.dom)
 
 // Debug
-const gui = new dat.GUI()
+export const GUI = new Gui()
 
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
 
 // Scene
 const scene = new THREE.Scene()
+scene.fog = new THREE.Fog(0xffffff, 10, 100)
 
-// Objects
-const geometry = new THREE.TorusGeometry( .7, .2, 16, 100 );
+// Plane
+const plane = new Plane( scene )
+plane.addPlane()
 
-// Materials
+// Buildings
 
-const material = new THREE.MeshBasicMaterial()
-material.color = new THREE.Color(0xff0000)
+const buildingGenerator = new Building( scene )
 
-// Mesh
-const sphere = new THREE.Mesh(geometry,material)
-scene.add(sphere)
+GUI.gui.add(buildingGenerator, "addBuilding")
+.name("Generar un Edificio")
 
 // Lights
 
-const pointLight = new THREE.PointLight(0xffffff, 0.1)
-pointLight.position.x = 2
-pointLight.position.y = 3
-pointLight.position.z = 4
-scene.add(pointLight)
+const L1 = new THREE.DirectionalLight(0xffffff, .4)
+L1.position.set(20, 15, 23)
+const L2 = L1.clone()
+L2.position.x = -20
+scene.add(L1, L2)
 
 /**
  * Sizes
@@ -60,20 +67,19 @@ window.addEventListener('resize', () =>
  */
 // Base camera
 const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
-camera.position.x = 0
-camera.position.y = 0
-camera.position.z = 2
+camera.position.set(0, 20, 30)
 scene.add(camera)
 
 // Controls
-// const controls = new OrbitControls(camera, canvas)
-// controls.enableDamping = true
+const controls = new OrbitControls(camera, canvas)
+controls.enableDamping = true
 
 /**
  * Renderer
  */
 const renderer = new THREE.WebGLRenderer({
-    canvas: canvas
+    canvas: canvas,
+    alpha: true,
 })
 renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
@@ -81,19 +87,11 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 /**
  * Animate
  */
-
-const clock = new THREE.Clock()
-
 const tick = () =>
 {
+    controls.update()
 
-    const elapsedTime = clock.getElapsedTime()
-
-    // Update objects
-    sphere.rotation.y = .5 * elapsedTime
-
-    // Update Orbital Controls
-    // controls.update()
+    stats.update()
 
     // Render
     renderer.render(scene, camera)
